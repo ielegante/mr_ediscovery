@@ -4,3 +4,4 @@ __pycache__/
 output/
 *.pyc
 consolidated_report.json
+.venv/

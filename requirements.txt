@@ -1,0 +1,2 @@
+pydantic-ai==1.64.0
+pymupdf==1.27.1
