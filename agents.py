@@ -16,6 +16,9 @@ from typing import TypeVar
 
 import logfire
 import pymupdf
+from dotenv import load_dotenv
+
+load_dotenv()
 from pydantic_ai import Agent
 
 logfire.configure()
@@ -25,6 +28,7 @@ from models import (
     BatchExtraction,
     ConsolidatedReport,
     ImpactAssessment,
+    KeyFinding,
     MitigationMeasure,
     SpeciesRecord,
 )
@@ -111,18 +115,32 @@ async def run_map(
         extraction.page_end = page_end
         extraction.source_document = source
         log.info(
-            "MAP batch %d done: %d species, %d impacts, %d mitigations",
+            "MAP batch %d done: %d species, %d impacts, %d mitigations, %d key_findings",
             batch_id,
             len(extraction.species),
             len(extraction.impacts),
             len(extraction.mitigations),
+            len(extraction.key_findings),
         )
         return extraction
 
 
 # --- Aggregation (pure Python, no LLM) ---
 
-CONSERVATION_SIGNIFICANT = {"cr", "en", "vu", "critically endangered", "endangered", "vulnerable"}
+CONSERVATION_SIGNIFICANT_CODES = {"cr", "en", "vu", "nt"}
+CONSERVATION_SIGNIFICANT_NAMES = {"critically endangered", "endangered", "vulnerable", "near threatened"}
+
+
+def _is_conservation_significant(status: str) -> bool:
+    """Match conservation codes and full names in statuses like 'VU (National)', 'CR (National), CR (Global)'."""
+    lowered = status.lower()
+    # Full-name substring match (safe — no ambiguity with longer words)
+    if any(name in lowered for name in CONSERVATION_SIGNIFICANT_NAMES):
+        return True
+    # Code match — split on non-alpha to get individual tokens, avoiding 'en' in 'Deficient'
+    tokens = set(lowered.replace(",", " ").replace("(", " ").replace(")", " ").split())
+    return bool(tokens & CONSERVATION_SIGNIFICANT_CODES)
+
 
 T = TypeVar("T")
 
@@ -156,23 +174,28 @@ def _mitigation_key(m: MitigationMeasure) -> tuple[str, str]:
     )
 
 
+def _key_finding_key(f: KeyFinding) -> tuple[str, str]:
+    return (
+        f.category.lower().strip(),
+        f.finding[:80].lower().strip(),
+    )
+
+
 def aggregate(extractions: list[BatchExtraction]) -> dict:
     """Deduplicate and count across all batch extractions. Returns data for reduce agent."""
     all_species = [s for ext in extractions for s in ext.species]
     all_impacts = [i for ext in extractions for i in ext.impacts]
     all_mitigations = [m for ext in extractions for m in ext.mitigations]
+    all_key_findings = [f for ext in extractions for f in ext.key_findings]
 
     species = _deduplicate(all_species, _species_key)
     impacts = _deduplicate(all_impacts, _impact_key)
     mitigations = _deduplicate(all_mitigations, _mitigation_key)
+    key_findings = _deduplicate(all_key_findings, _key_finding_key)
 
     total_pages = sum(ext.page_end - ext.page_start + 1 for ext in extractions)
 
-    conservation_significant = sum(
-        1
-        for s in species
-        if s.conservation_status.lower().strip() in CONSERVATION_SIGNIFICANT
-    )
+    conservation_significant = sum(1 for s in species if _is_conservation_significant(s.conservation_status))
 
     significance_counts = {"major": 0, "moderate": 0, "minor": 0, "negligible": 0}
     for i in impacts:
@@ -184,6 +207,7 @@ def aggregate(extractions: list[BatchExtraction]) -> dict:
         "species": [asdict(s) for s in species],
         "impacts": [asdict(i) for i in impacts],
         "mitigations": [asdict(m) for m in mitigations],
+        "key_findings": [asdict(f) for f in key_findings],
         "total_species": len(species),
         "total_species_conservation_significant": conservation_significant,
         "impacts_major": significance_counts["major"],
@@ -213,6 +237,7 @@ async def run_reduce(aggregated: dict) -> ConsolidatedReport:
     report.species = [SpeciesRecord(**s) for s in aggregated["species"]]
     report.impacts = [ImpactAssessment(**i) for i in aggregated["impacts"]]
     report.mitigations = [MitigationMeasure(**m) for m in aggregated["mitigations"]]
+    report.key_findings = [KeyFinding(**f) for f in aggregated["key_findings"]]
     report.total_species = aggregated["total_species"]
     report.total_species_conservation_significant = aggregated["total_species_conservation_significant"]
     report.impacts_major = aggregated["impacts_major"]
@@ -263,7 +288,7 @@ async def main() -> None:
     extractions = [
         e
         for e in results
-        if e is not None and (e.species or e.impacts or e.mitigations or e.baselines)
+        if e is not None and (e.species or e.impacts or e.mitigations or e.baselines or e.key_findings)
     ]
     log.info("Non-empty extractions: %d (failed: %d)", len(extractions), failed)
 
@@ -273,15 +298,26 @@ async def main() -> None:
     # Reduce phase
     report = await run_reduce(aggregated)
 
-    # Write output
-    output_path = output_dir / "consolidated_report.json"
-    output_path.write_text(json.dumps(asdict(report), indent=2))
-    log.info("Report written to %s", output_path)
+    # Write JSON (machine-readable)
+    report_data = asdict(report)
+    json_path = output_dir / "consolidated_report.json"
+    json_path.write_text(json.dumps(report_data, indent=2))
+    log.info("JSON written to %s", json_path)
+
+    # Write Markdown (human-readable)
+    from format_report import format_report
+
+    md_path = output_dir / "consolidated_report.md"
+    md_path.write_text(format_report(report_data))
+    log.info("Markdown written to %s", md_path)
+
+    total_impacts = report.impacts_major + report.impacts_moderate + report.impacts_minor + report.impacts_negligible
     log.info(
         "Summary: %d species (%d conservation-significant), "
         "%d impacts (major=%d, moderate=%d, minor=%d, negligible=%d)",
         report.total_species,
         report.total_species_conservation_significant,
+        total_impacts,
         report.impacts_major,
         report.impacts_moderate,
         report.impacts_minor,

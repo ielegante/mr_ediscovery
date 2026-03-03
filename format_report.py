@@ -7,11 +7,17 @@ import json
 import sys
 from pathlib import Path
 
-CONSERVATION_SIGNIFICANT = {"cr", "en", "vu", "critically endangered", "endangered", "vulnerable"}
+CONSERVATION_SIGNIFICANT_CODES = {"cr", "en", "vu", "nt"}
+CONSERVATION_SIGNIFICANT_NAMES = {"critically endangered", "endangered", "vulnerable", "near threatened"}
 
 
 def _is_significant(status: str) -> bool:
-    return any(s in status.lower() for s in CONSERVATION_SIGNIFICANT)
+    """Match conservation codes and full names in statuses like 'VU (National)', 'CR (National), CR (Global)'."""
+    lowered = status.lower()
+    if any(name in lowered for name in CONSERVATION_SIGNIFICANT_NAMES):
+        return True
+    tokens = set(lowered.replace(",", " ").replace("(", " ").replace(")", " ").split())
+    return bool(tokens & CONSERVATION_SIGNIFICANT_CODES)
 
 
 def _escape_md(text: str) -> str:
@@ -54,6 +60,28 @@ def format_report(data: dict) -> str:
     w("")
     w(data["conclusion"])
     w("")
+
+    # --- Key Findings ---
+    key_findings = data.get("key_findings", [])
+    if key_findings:
+        w("## Key Findings")
+        w("")
+
+        findings_by_category: dict[str, list] = {}
+        for f in key_findings:
+            cat = f["category"] or "General"
+            findings_by_category.setdefault(cat, []).append(f)
+
+        for cat in sorted(findings_by_category):
+            findings = findings_by_category[cat]
+            w(f"### {cat}")
+            w("")
+            for f in findings:
+                site_tag = f" *({f['site']})*" if f["site"] else ""
+                w(f"- {_escape_md(f['finding'])}{site_tag}")
+                if f["significance"]:
+                    w(f"  - **Significance**: {_escape_md(f['significance'])}")
+            w("")
 
     # --- Species ---
     significant = [s for s in data["species"] if _is_significant(s["conservation_status"])]

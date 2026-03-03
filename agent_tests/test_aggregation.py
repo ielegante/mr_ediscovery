@@ -4,9 +4,9 @@
 import pytest
 
 from agents import (
-    CONSERVATION_SIGNIFICANT,
     _deduplicate,
     _impact_key,
+    _is_conservation_significant,
     _mitigation_key,
     _species_key,
     aggregate,
@@ -94,14 +94,18 @@ def test_dedup_empty_list():
 # --- Conservation significance counting ---
 
 
-@pytest.mark.parametrize("status", ["CR", "EN", "VU", "cr", "Critically Endangered", "endangered"])
+@pytest.mark.parametrize("status", [
+    "CR", "EN", "VU", "NT", "cr", "Critically Endangered", "endangered", "near threatened",
+    "VU (National)", "CR (National), CR (Global)", "EN (National), VU (Global)",
+    "NT (National), EN (Global)",
+])
 def test_conservation_significant_statuses(status):
-    assert status.lower().strip() in CONSERVATION_SIGNIFICANT
+    assert _is_conservation_significant(status)
 
 
-@pytest.mark.parametrize("status", ["LC", "NT", "DD", "NE", ""])
+@pytest.mark.parametrize("status", ["LC", "DD", "NE", "", "Least Concern", "Data Deficient"])
 def test_conservation_non_significant_statuses(status):
-    assert status.lower().strip() not in CONSERVATION_SIGNIFICANT
+    assert not _is_conservation_significant(status)
 
 
 def test_aggregate_counts_conservation_significant(batch_with_species, batch_with_duplicates):
