@@ -39,8 +39,9 @@ log = logging.getLogger(__name__)
 # --- Configuration (override via environment or .env file) ---
 
 MODEL = os.environ.get("MODEL", "gateway/anthropic:claude-sonnet-4-5")
-BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "10"))
+BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "20"))
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "5"))
+PDF_GLOB = os.environ.get("PDF_GLOB", "*.pdf")
 PAGE_BREAK = "\n\n--- PAGE BREAK ---\n\n"
 MIN_TEXT_LENGTH = 50  # batches with less text than this are considered empty
 
@@ -198,7 +199,7 @@ def aggregate(extractions: list[BatchExtraction]) -> dict:
 
 
 async def run_reduce(aggregated: dict) -> ConsolidatedReport:
-    """Run the reduce agent on pre-aggregated data."""
+    """Run the reduce agent on pre-aggregated data, then merge lists from Python."""
     prompt = json.dumps(aggregated, indent=2)
     log.info(
         "REDUCE: %d species, %d impacts, %d mitigations",
@@ -207,7 +208,20 @@ async def run_reduce(aggregated: dict) -> ConsolidatedReport:
         len(aggregated["mitigations"]),
     )
     result = await get_reduce_agent().run(prompt)
-    return result.output
+    report = result.output
+    # LLM produces narrative; Python owns the data lists and counts
+    report.species = [SpeciesRecord(**s) for s in aggregated["species"]]
+    report.impacts = [ImpactAssessment(**i) for i in aggregated["impacts"]]
+    report.mitigations = [MitigationMeasure(**m) for m in aggregated["mitigations"]]
+    report.total_species = aggregated["total_species"]
+    report.total_species_conservation_significant = aggregated["total_species_conservation_significant"]
+    report.impacts_major = aggregated["impacts_major"]
+    report.impacts_moderate = aggregated["impacts_moderate"]
+    report.impacts_minor = aggregated["impacts_minor"]
+    report.impacts_negligible = aggregated["impacts_negligible"]
+    report.total_batches_processed = aggregated["total_batches_processed"]
+    report.total_pages_processed = aggregated["total_pages_processed"]
+    return report
 
 
 # --- Main ---
@@ -218,7 +232,7 @@ async def main() -> None:
     output_dir = Path(os.environ.get("OUTPUT_DIR", "."))
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    pdfs = sorted(pdf_dir.glob("*.pdf"))
+    pdfs = sorted(pdf_dir.glob(PDF_GLOB))
     if not pdfs:
         log.error("No PDFs found in %s", pdf_dir)
         sys.exit(1)

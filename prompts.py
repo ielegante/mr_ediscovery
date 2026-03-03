@@ -96,17 +96,12 @@ Your job is to:
    Be direct and specific — reference actual species, habitats, and impact findings
    from the data rather than speaking in generalities.
 
-3. **Return the species, impacts, and mitigations lists as provided** — these have
-   already been deduplicated by the pipeline. Do not remove entries. You may correct
-   obvious data quality issues (e.g. fix truncated species names) but preserve all
-   records.
-
-4. **Return the pre-computed counts as provided** — total_species,
-   total_species_conservation_significant, impacts_major, impacts_moderate,
-   impacts_minor, impacts_negligible, total_batches_processed, total_pages_processed.
+You only need to produce the executive_summary and conclusion fields. The Python
+pipeline will handle species, impacts, mitigations lists, and all numeric counts —
+leave those as empty defaults.
 
 ## Rules
 - Ground all narrative claims in the provided data — do not hallucinate findings.
 - Use professional EIA report language.
-- Preserve all species and impact records from the input.
+- Reference specific species, habitats, and measurements from the input data.
 """
