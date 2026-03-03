@@ -41,6 +41,23 @@ mammals, invertebrates, marine life. Include:
 - Description of finding
 - Measured value if stated
 
+**Key findings**: Qualitative or spatial observations that don't fit the categories above.
+These are narrative findings about landscape-level context, ecological connectivity,
+cumulative impacts, or risk thresholds. Examples:
+- Ecological corridor connectivity (e.g. "site lies within one of four key ecological
+  corridors linking X to Y")
+- Cumulative impacts from concurrent developments nearby
+- Landscape context (e.g. percentage of national habitat, rare habitat types)
+- Critical thresholds or risk statements (e.g. vibration levels vs species tolerance)
+- Irreversibility statements (e.g. "habitat cannot be re-created")
+
+Include:
+- Category (ecological connectivity, cumulative impact, landscape context, risk threshold,
+  habitat irreversibility, or other descriptive category)
+- The finding itself (quote or closely paraphrase the report)
+- Site if applicable
+- Why this finding is significant
+
 **Legislation references**: Any law, regulation, standard, or guideline referenced:
 - Full name
 - Jurisdiction (Singapore, international)

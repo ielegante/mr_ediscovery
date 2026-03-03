@@ -63,6 +63,16 @@ class LegislationReference:
     relevance: str = ""
 
 
+@dataclass
+class KeyFinding:
+    """A qualitative or spatial finding that doesn't fit structured tables."""
+
+    category: str  # e.g. ecological connectivity, cumulative impact, landscape context
+    finding: str = ""
+    site: str = ""
+    significance: str = ""  # why this matters
+
+
 # --- Map output (one per batch) ---
 
 
@@ -81,6 +91,7 @@ class BatchExtraction:
     mitigations: list[MitigationMeasure] = field(default_factory=list)
     baselines: list[BaselineFinding] = field(default_factory=list)
     legislation: list[LegislationReference] = field(default_factory=list)
+    key_findings: list[KeyFinding] = field(default_factory=list)
 
 
 # --- Reduce output (consolidated across all batches) ---
@@ -95,6 +106,7 @@ class ConsolidatedReport:
     species: list[SpeciesRecord] = field(default_factory=list)
     impacts: list[ImpactAssessment] = field(default_factory=list)
     mitigations: list[MitigationMeasure] = field(default_factory=list)
+    key_findings: list[KeyFinding] = field(default_factory=list)
     total_species: int = 0
     total_species_conservation_significant: int = 0
     impacts_major: int = 0
