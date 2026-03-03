@@ -5,3 +5,4 @@ output/
 *.pyc
 consolidated_report.json
 .venv/
+.logfire/

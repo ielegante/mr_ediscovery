@@ -14,8 +14,12 @@ from functools import cache
 from pathlib import Path
 from typing import TypeVar
 
+import logfire
 import pymupdf
 from pydantic_ai import Agent
+
+logfire.configure()
+logfire.instrument_pydantic_ai()
 
 from models import (
     BatchExtraction,
