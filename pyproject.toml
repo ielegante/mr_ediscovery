@@ -1,0 +1,16 @@
+[project]
+name = "eia-extraction"
+version = "0.1.0"
+description = "Map-reduce EIA document extraction pipeline"
+requires-python = ">=3.12"
+license = "LicenseRef-CC-BY-NC-SA-4.0"
+dependencies = [
+    "logfire>=4.25.0",
+    "pydantic-ai>=1.64.0",
+    "pymupdf>=1.27.1",
+    "python-dotenv>=1.2.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["agent_tests"]
