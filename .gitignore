@@ -6,3 +6,4 @@ output/
 consolidated_report.json
 .venv/
 .logfire/
+consolidated_report.md
