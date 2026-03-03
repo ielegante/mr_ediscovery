@@ -4,6 +4,10 @@ A map-reduce pipeline that extracts structured environmental data from Environme
 
 Given a multi-hundred-page EIA report, the pipeline splits it into batches, extracts structured data (species, impacts, mitigations, key findings), deduplicates and aggregates in Python, then generates a consolidated narrative report with priority-scenario recommendations.
 
+## Example Output
+
+**[View the full extracted report](consolidated_report.md)** — generated from a 596-page EIA for CleanTech Park & Bahar Industrial Estates, Singapore.
+
 ## What it produces
 
 From a single PDF, you get:
