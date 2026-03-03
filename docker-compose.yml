@@ -1,0 +1,14 @@
+services:
+  ediscovery:
+    build: .
+    volumes:
+      - .:/app/pdfs:ro
+      - ./output:/app/output
+    environment:
+      - PYDANTIC_AI_GATEWAY_API_KEY=${PYDANTIC_AI_GATEWAY_API_KEY}
+      - MODEL=${MODEL:-gateway/anthropic:claude-sonnet-4-5}
+      - BATCH_SIZE=${BATCH_SIZE:-10}
+      - MAX_CONCURRENT=${MAX_CONCURRENT:-5}
+      - PDF_DIR=/app/pdfs
+      - OUTPUT_DIR=/app/output
+    command: python agents.py
