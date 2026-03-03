@@ -95,11 +95,15 @@ async def run_map(
     text: str,
     source: str,
     semaphore: asyncio.Semaphore,
-) -> BatchExtraction:
-    """Run the map agent on one batch with concurrency control."""
+) -> BatchExtraction | None:
+    """Run the map agent on one batch with concurrency control. Returns None on failure."""
     async with semaphore:
         log.info("MAP batch %d (pages %d-%d, %s)", batch_id, page_start, page_end, source)
-        result = await get_map_agent().run(text)
+        try:
+            result = await get_map_agent().run(text)
+        except Exception:
+            log.exception("MAP batch %d FAILED", batch_id)
+            return None
         extraction = result.output
         extraction.batch_id = batch_id
         extraction.page_start = page_start
@@ -236,15 +240,18 @@ async def main() -> None:
         run_map(i, start, end, text, source, semaphore)
         for i, (start, end, text, source) in enumerate(all_batches)
     ]
-    extractions = await asyncio.gather(*tasks)
+    results = await asyncio.gather(*tasks)
 
-    # Filter extractions with no structured data
+    # Filter out failed batches (None) and empty extractions
+    failed = sum(1 for r in results if r is None)
+    if failed:
+        log.warning("MAP phase: %d/%d batches failed", failed, len(results))
     extractions = [
         e
-        for e in extractions
-        if e.species or e.impacts or e.mitigations or e.baselines
+        for e in results
+        if e is not None and (e.species or e.impacts or e.mitigations or e.baselines)
     ]
-    log.info("Non-empty extractions: %d", len(extractions))
+    log.info("Non-empty extractions: %d (failed: %d)", len(extractions), failed)
 
     # Aggregate in Python
     aggregated = aggregate(extractions)
