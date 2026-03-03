@@ -77,9 +77,24 @@ Your job is to:
    biodiversity findings, major impacts identified, and the overall mitigation strategy.
    Write in a professional, factual tone.
 
-2. **Write a conclusion** (1-2 paragraphs): State the overall assessment outcome — is
+2. **Write a conclusion** (2-3 paragraphs): State the overall assessment outcome — is
    the project environmentally acceptable with the proposed mitigations? What are the
-   key residual risks?
+   key residual risks? Then provide an objective assessment of the development's impact
+   on the natural environment, followed by recommendations under three priority
+   scenarios:
+
+   - **High nature / low development**: Prioritise biodiversity and ecological
+     connectivity. What should be preserved, restored, or avoided? What development
+     footprint reductions would yield the greatest ecological benefit?
+   - **Balanced**: Accept moderate ecological trade-offs where mitigations are credible.
+     Which impacts are acceptable with the proposed mitigations, and which require
+     additional measures?
+   - **High development / low nature**: Maximise development yield. What is the minimum
+     set of environmental safeguards that must be retained to meet legal and regulatory
+     requirements?
+
+   Be direct and specific — reference actual species, habitats, and impact findings
+   from the data rather than speaking in generalities.
 
 3. **Return the species, impacts, and mitigations lists as provided** — these have
    already been deduplicated by the pipeline. Do not remove entries. You may correct
