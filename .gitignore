@@ -1,0 +1,6 @@
+*.pdf
+.env
+__pycache__/
+output/
+*.pyc
+consolidated_report.json
