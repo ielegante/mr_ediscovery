@@ -6,7 +6,7 @@ Given a multi-hundred-page EIA report, the pipeline splits it into batches, extr
 
 ## Example Output
 
-**[View the full extracted report](consolidated_report.md)** — generated from a 596-page EIA for CleanTech Park & Bahar Industrial Estates, Singapore.
+**[View the full extracted report](examples/consolidated_report.md)** — generated from a 596-page EIA for CleanTech Park & Bahar Industrial Estates, Singapore.
 
 ## What it produces
 
@@ -19,13 +19,13 @@ From a single PDF, you get:
 
 - **Python 3.12+**
 - **[uv](https://docs.astral.sh/uv/)** — Python package manager
-- **PydanticAI Gateway API key** — get one at https://app.pydantic.dev/
+- **[PydanticAI Gateway](https://app.pydantic.dev/) API key** — a proxy service that gives you one API key for multiple LLM providers (Anthropic, OpenAI, etc.) and tracks costs per-request. Get a key at https://app.pydantic.dev/
 
 ## Quick start
 
 ```bash
 # Clone the repo
-git clone <repo-url>
+git clone https://github.com/ielegante/mr_ediscovery.git
 cd ediscovery
 
 # Install dependencies
@@ -90,6 +90,7 @@ requirements.txt   Pinned dependencies
 Dockerfile         Container build
 docker-compose.yml Container orchestration
 agent_tests/       Test suite
+examples/          Example output from a real EIA report
 ```
 
 ## How it works

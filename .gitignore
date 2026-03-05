@@ -1,8 +1,11 @@
 *.pdf
 .env
 __pycache__/
+.pytest_cache/
 output/
 *.pyc
 consolidated_report.json
+/consolidated_report.md
 .venv/
 .logfire/
+uv.lock
